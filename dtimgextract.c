@@ -46,7 +46,7 @@ void dump_files_v1(FILE *fd, qca_head header) {
     printf("\nPid\tVid\tSrev\tOffset\tlen\n");
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v1), 1, fd);
-        printf("%u\t%u\t%u\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
+        printf("%x\t%x\t%x\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
                                            images[i].sec_rev, 
                                            images[i].offset, images[i].len);
     }
@@ -56,7 +56,7 @@ void dump_files_v1(FILE *fd, qca_head header) {
 	char dtbname[256];
 	char *dtb;
         FILE *out_fd = NULL;
-        sprintf(dtbname, "%u_%u_%u.dtb", images[i].platform_id, images[i].variant_id,
+        sprintf(dtbname, "%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
                                          images[i].sec_rev);
 	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
 	dtb = malloc(images[i].len);
@@ -77,7 +77,7 @@ void dump_files_v2(FILE *fd, qca_head header) {
     printf("\nPid\tVid\tSrev\tUnknown\tOffset\tlen\n");
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v2), 1, fd);
-        printf("%u\t%u\t%u\t%u\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
+        printf("%x\t%x\t%x\t%x\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
                                            images[i].sec_rev, images[i].unknown,
                                            images[i].offset, images[i].len);
     }
@@ -87,7 +87,7 @@ void dump_files_v2(FILE *fd, qca_head header) {
 	char dtbname[256];
 	char *dtb;
         FILE *out_fd = NULL;
-        sprintf(dtbname, "%u_%u_%u.dtb", images[i].platform_id, images[i].variant_id,
+        sprintf(dtbname, "%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
                                          images[i].sec_rev);
 	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
 	dtb = malloc(images[i].len);
@@ -108,7 +108,7 @@ void dump_files_v3(FILE *fd, qca_head header) {
     printf("\nPid\tVid\tSrev\tUnknown\tOffset\tlen\tunk2\tunk3\tunk4\tunk5\n");
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v3), 1, fd);
-        printf("%u\t%u\t%u\t%u\t%x\t%x\t%u\t%u\t%u\t%u\n", images[i].platform_id, images[i].variant_id,
+        printf("%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
                                            images[i].sec_rev, images[i].unknown,
                                            images[i].offset, images[i].len,
 					   images[i].unk2, images[i].unk3,
@@ -120,7 +120,7 @@ void dump_files_v3(FILE *fd, qca_head header) {
 	char dtbname[256];
 	char *dtb;
         FILE *out_fd = NULL;
-        sprintf(dtbname, "%u_%u_%u.dtb", images[i].platform_id, images[i].variant_id,
+        sprintf(dtbname, "%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
                                          images[i].sec_rev);
 	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
 	dtb = malloc(images[i].len);
