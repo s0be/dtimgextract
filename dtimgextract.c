@@ -30,11 +30,11 @@ typedef struct {
     uint32_t platform_id;
     uint32_t variant_id;
     uint32_t sec_rev;
-    uint32_t unknown;
-    uint32_t unk5;
-    uint32_t unk4;
-    uint32_t unk2;
-    uint32_t unk3;
+    uint32_t msm_id2;
+    uint32_t pmic1;
+    uint32_t pmic2;
+    uint32_t pmic3;
+    uint32_t pmic4;
     uint32_t offset;
     uint32_t len;
 } dtb_entry_v3;
@@ -105,14 +105,14 @@ void dump_files_v3(FILE *fd, qca_head header) {
     int i;
     dtb_entry_v3 *images = malloc(header.num * sizeof(dtb_entry_v3));
 
-    printf("\nPid\tVid\tSrev\tUnknown\tOffset\tlen\tunk2\tunk3\tunk4\tunk5\n");
+    printf("\nPid\tVid\tSrev\tmsm_id2\tOffset\tlen\tpmic1\tpmic2\tpmic3\tpmic4\n");
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v3), 1, fd);
         printf("%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
-                                           images[i].sec_rev, images[i].unknown,
+                                           images[i].sec_rev, images[i].msm_id2,
                                            images[i].offset, images[i].len,
-					   images[i].unk2, images[i].unk3,
-                                           images[i].unk4, images[i].unk5);
+					   images[i].pmic1, images[i].pmic2,
+                                           images[i].pmic3, images[i].pmic4);
     }
     printf("\n");
     fseek(fd, 0, SEEK_SET);
