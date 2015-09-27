@@ -3,15 +3,17 @@ Tool to decompile a qualcomm dt.img into its split dtb files for the supported b
 
 Currently only dt.img v2 tested
 
+```
 Compile:
    gcc dtimgextract.c -o dtimgextract
-
 Usage:
    ./dtimgextract dt.img
-
+```
 
 # Example usage and output
-$ ./dtimgextract dt.img 
+
+```
+$ ./dtimgextract dt.img
 qc_magic: QCDT
 version: 2
 count: 3
@@ -24,7 +26,9 @@ Pid     Vid     Srev    Unknown Offset  len
 Writing 239_8_0.dtb(32800 bytes)
 Writing 241_8_0.dtb(32800 bytes)
 Writing 263_8_0.dtb(32800 bytes)
-
+```
 
 # Decompiling the output
+```
 $ dtc -I dtb -O dts 239_8_0.dtb -o 239_8_0.dts
+```
