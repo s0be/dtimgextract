@@ -105,14 +105,18 @@ void dump_files_v3(FILE *fd, qca_head header) {
     int i;
     dtb_entry_v3 *images = malloc(header.num * sizeof(dtb_entry_v3));
 
-    printf("\nPid\tVid\tSrev\tmsm_id2\tOffset\tlen\tpmic1\tpmic2\tpmic3\tpmic4\n");
+    printf("\nPid\tVid\tSrev\tmsm_id2\tpmic1\tpmic2\tpmic3\tpmic4\toffset\tlen\n");
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v3), 1, fd);
-        printf("%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
-                                           images[i].sec_rev, images[i].msm_id2,
-                                           images[i].offset, images[i].len,
-					   images[i].pmic1, images[i].pmic2,
-                                           images[i].pmic3, images[i].pmic4);
+        printf("%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\n", 
+               images[i].platform_id, images[i].variant_id,
+               images[i].sec_rev, images[i].msm_id2,
+               images[i].pmic1, images[i].pmic2,
+               images[i].pmic3, images[i].pmic4,
+               images[i].offset, images[i].len);
+       printf("  qcom,msm-id=<0x%x 0x%x>;\n",images[i].platform_id, images[i].msm_id2);
+       printf("  qcom,pmic-id=<0x%x 0x%x 0x%x 0x%x>;\n", images[i].pmic1, images[i].pmic2, images[i].pmic3, images[i].pmic4);
+       printf("  qcom,board-id=<0x%x 0x%x>;\n", images[i].variant_id, images[i].sec_rev);
     }
     printf("\n");
     fseek(fd, 0, SEEK_SET);
