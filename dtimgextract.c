@@ -120,8 +120,8 @@ void dump_files_v3(FILE *fd, qca_head header) {
 	char dtbname[256];
 	char *dtb;
         FILE *out_fd = NULL;
-        sprintf(dtbname, "%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
-                                         images[i].sec_rev);
+        sprintf(dtbname, "%x_%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
+                                         images[i].sec_rev, images[i].msm_id2);
 	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
 	dtb = malloc(images[i].len);
 	fseek(fd, images[i].offset, SEEK_SET);
