@@ -4,6 +4,23 @@
 #include <stdint.h>
 
 typedef struct {
+    uint8_t hd_magic[8];
+    uint32_t k_size;
+    uint32_t k_addr;
+    uint32_t r_size;
+    uint32_t r_addr;
+    uint32_t s_size;
+    uint32_t s_addr;
+    uint32_t t_addr;
+    uint32_t p_size;
+    uint32_t unused1;
+    uint32_t unused2;
+    uint8_t pname[16];
+    uint8_t cmdline[512];
+    uint32_t id;
+} boot_head;
+
+typedef struct {
     uint8_t qc_magic[4];
     uint32_t version;
     uint32_t num;
@@ -39,7 +56,7 @@ typedef struct {
     uint32_t len;
 } dtb_entry_v3;
 
-void dump_files_v1(FILE *fd, qca_head header) {
+void dump_files_v1(FILE *fd, qca_head header, uint32_t headerat) {
     int i;
     dtb_entry_v1 *images = malloc(header.num * sizeof(dtb_entry_v1));
 
@@ -47,11 +64,11 @@ void dump_files_v1(FILE *fd, qca_head header) {
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v1), 1, fd);
         printf("%x\t%x\t%x\t%x\t%x\n", images[i].platform_id, images[i].variant_id,
-                                           images[i].sec_rev, 
+                                           images[i].sec_rev,
                                            images[i].offset, images[i].len);
     }
     printf("\n");
-    fseek(fd, 0, SEEK_SET);
+    fseek(fd, headerat, SEEK_SET);
     for ( i = 0; i < header.num; i++ ){
 	char dtbname[256];
 	char *dtb;
@@ -70,7 +87,7 @@ void dump_files_v1(FILE *fd, qca_head header) {
     free(images);
 }
 
-void dump_files_v2(FILE *fd, qca_head header) {
+void dump_files_v2(FILE *fd, qca_head header, uint32_t headerat) {
     int i;
     dtb_entry_v2 *images = malloc(header.num * sizeof(dtb_entry_v2));
 
@@ -82,7 +99,7 @@ void dump_files_v2(FILE *fd, qca_head header) {
                                            images[i].offset, images[i].len);
     }
     printf("\n");
-    fseek(fd, 0, SEEK_SET);
+    fseek(fd, headerat, SEEK_SET);
     for ( i = 0; i < header.num; i++ ){
 	char dtbname[256];
 	char *dtb;
@@ -101,14 +118,14 @@ void dump_files_v2(FILE *fd, qca_head header) {
     free(images);
 }
 
-void dump_files_v3(FILE *fd, qca_head header) {
+void dump_files_v3(FILE *fd, qca_head header, uint32_t headerat) {
     int i;
     dtb_entry_v3 *images = malloc(header.num * sizeof(dtb_entry_v3));
 
     printf("\nPid\tVid\tSrev\tmsm_id2\tpmic1\tpmic2\tpmic3\tpmic4\toffset\tlen\n");
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v3), 1, fd);
-        printf("%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\n", 
+        printf("%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\t%x\n",
                images[i].platform_id, images[i].variant_id,
                images[i].sec_rev, images[i].msm_id2,
                images[i].pmic1, images[i].pmic2,
@@ -119,7 +136,7 @@ void dump_files_v3(FILE *fd, qca_head header) {
        printf("  qcom,board-id=<0x%x 0x%x>;\n", images[i].variant_id, images[i].sec_rev);
     }
     printf("\n");
-    fseek(fd, 0, SEEK_SET);
+    fseek(fd, headerat, SEEK_SET);
     for ( i = 0; i < header.num; i++ ){
 	char dtbname[256];
 	char *dtb;
@@ -141,8 +158,8 @@ void dump_files_v3(FILE *fd, qca_head header) {
 void splitFile(char *file){
 
     FILE *fd = NULL;
-    FILE *ft = NULL;
     int i=0,imagecount=0;
+    int headerat = 0;
     qca_head header;
     dtb_entry_v2 *images;
 
@@ -150,20 +167,52 @@ void splitFile(char *file){
         printf ( "Extract dt.img file, open %s failure!\n", file );
         exit(1);
     }
+retry:
+    fread(&header, sizeof(qca_head), 1, fd);
 
-    fread(&header, sizeof(header), 1, fd);
+    if(strncmp("QCDT", header.qc_magic, 4))
+    {
+        boot_head bheader;
+        printf("Not a dt.img, processing as boot.img(got %.4s, wanted %s)\n", header.qc_magic, "QCDT");
+        fseek(fd, headerat, SEEK_SET);
+        fread(&bheader, sizeof(boot_head), 1, fd);
+        if(strncmp("ANDROID!", bheader.hd_magic, 8)) {
+            printf("Not a boot.img, aborting (got %.8s, wanted %s)\n", bheader.hd_magic, "ANDROID!");
+            return;
+        } // 0x1037800/0x106A800 0x33000
+        printf("hd_magic: %.8s\n", bheader.hd_magic);
+        printf("k_size: 0x%x\n", bheader.k_size);
+        printf("k_addr: 0x%x\n", bheader.k_addr);
+        printf("r_size: 0x%x\n", bheader.r_size);
+        printf("r_addr: 0x%x\n", bheader.r_addr);
+        printf("s_size: 0x%x\n", bheader.s_size);
+        printf("s_addr: 0x%x\n", bheader.s_addr);
+        printf("t_addr: 0x%x\n", bheader.t_addr);
+        printf("p_size: 0x%x\n", bheader.p_size);
+        printf("unused: 0x%x\n", bheader.unused1);
+        printf("unused: 0x%x\n", bheader.unused2);
+        printf("pname: %.16s\n", bheader.pname);
+        printf("cmdline: %.512s\n", bheader.cmdline);
+        printf("id: %u\n", bheader.id);
+        fseek (fd, 0, SEEK_END);
+        headerat = ftell(fd) - bheader.unused1;
+	printf("Trying header at 0x%x\n", headerat);
+        if(fseek(fd, headerat , SEEK_SET)) return;
+        goto retry;
+        return;
+    }
 
-    printf("qc_magic: %s\n", header.qc_magic);
+    printf("qc_magic: %.4s\n", header.qc_magic);
     printf("version: %u\n", header.version);
     printf("count: %u\n", header.num);
 
     switch(header.version) {
-        case 1: dump_files_v1(fd, header); break;
-        case 2: dump_files_v2(fd, header); break; 
-        case 3: dump_files_v3(fd, header); break;
+        case 1: dump_files_v1(fd, header, headerat); break;
+        case 2: dump_files_v2(fd, header, headerat); break;
+        case 3: dump_files_v3(fd, header, headerat); break;
         default: printf("header v%u format not implemented\n", header.version); return;
     }
- 
+
     fclose(fd);
 }
 
