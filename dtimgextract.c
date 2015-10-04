@@ -56,6 +56,21 @@ typedef struct {
     uint32_t len;
 } dtb_entry_v3;
 
+typedef struct {
+    uint32_t platform_id;
+    uint32_t variant_id;
+    uint32_t sec_rev;
+    uint32_t msm_id2;
+    uint32_t pmic1;
+    uint32_t pmic2;
+    uint32_t pmic3;
+    uint32_t pmic4;
+    uint32_t unknown1;
+    char unknown2[8];
+    uint32_t offset;
+    uint32_t len;
+} dtb_entry_v3_coolpad;
+
 void dump_files_v1(FILE *fd, qca_head header, uint32_t headerat) {
     int i;
     dtb_entry_v1 *images = malloc(header.num * sizeof(dtb_entry_v1));
@@ -77,7 +92,7 @@ void dump_files_v1(FILE *fd, qca_head header, uint32_t headerat) {
                                          images[i].sec_rev);
 	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
 	dtb = malloc(images[i].len);
-	fseek(fd, images[i].offset, SEEK_SET);
+	fseek(fd, images[i].offset + headerat, SEEK_SET);
 	fread(dtb, images[i].len, 1, fd);
 	out_fd = fopen(dtbname, "wb");
 	fwrite(dtb, images[i].len, 1, out_fd);
@@ -108,7 +123,7 @@ void dump_files_v2(FILE *fd, qca_head header, uint32_t headerat) {
                                          images[i].sec_rev);
 	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
 	dtb = malloc(images[i].len);
-	fseek(fd, images[i].offset, SEEK_SET);
+	fseek(fd, images[i].offset + headerat, SEEK_SET);
 	fread(dtb, images[i].len, 1, fd);
 	out_fd = fopen(dtbname, "wb");
 	fwrite(dtb, images[i].len, 1, out_fd);
@@ -145,7 +160,7 @@ void dump_files_v3(FILE *fd, qca_head header, uint32_t headerat) {
                                          images[i].sec_rev, images[i].msm_id2);
 	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
 	dtb = malloc(images[i].len);
-	fseek(fd, images[i].offset, SEEK_SET);
+	fseek(fd, images[i].offset + headerat, SEEK_SET);
 	fread(dtb, images[i].len, 1, fd);
 	out_fd = fopen(dtbname, "wb");
 	fwrite(dtb, images[i].len, 1, out_fd);
@@ -155,7 +170,50 @@ void dump_files_v3(FILE *fd, qca_head header, uint32_t headerat) {
     free(images);
 }
 
-void splitFile(char *file, int offs){
+void dump_files_v3_coolpad(FILE *fd, qca_head header, uint32_t headerat) {
+    int i;
+    dtb_entry_v3_coolpad *images = malloc(header.num * sizeof(dtb_entry_v3_coolpad));
+
+    printf("\nPid\tVid\tSrev\tmsm_id2\tpmic1\tpmic2\tpmic3\tpmic4\tunk1\tunk2\tunk3\toffset\tlen\n");
+    for ( i = 0; i < header.num ; i++ ){
+        fread(&images[i], sizeof(dtb_entry_v3_coolpad), 1, fd);
+        printf("%x\t%x\t"
+	       "%x\t%x\t"
+	       "%x\t%x\t"
+	       "%x\t%x\t"
+	       "%x\t%s\t"
+	       "%x\t%x\n",
+               images[i].platform_id, images[i].variant_id,
+               images[i].sec_rev, images[i].msm_id2,
+               images[i].pmic1, images[i].pmic2,
+               images[i].pmic3, images[i].pmic4,
+               images[i].unknown1, images[i].unknown2,
+               images[i].offset, images[i].len);
+     //  printf("  qcom,msm-id=<0x%x 0x%x>;\n",images[i].platform_id, images[i].msm_id2);
+     //  printf("  qcom,pmic-id=<0x%x 0x%x 0x%x 0x%x>;\n", images[i].pmic1, images[i].pmic2, images[i].pmic3, images[i].pmic4);
+     //  printf("  qcom,board-id=<0x%x 0x%x>;\n", images[i].variant_id, images[i].sec_rev);
+    }
+    printf("\n");
+    fseek(fd, headerat, SEEK_SET);
+    for ( i = 0; i < header.num; i++ ){
+        char dtbname[256];
+        char *dtb;
+        FILE *out_fd = NULL;
+        sprintf(dtbname, "%x_%x_%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
+                                         images[i].sec_rev, images[i].msm_id2, images[i].unknown1);
+        printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
+        dtb = malloc(images[i].len);
+        fseek(fd, images[i].offset + headerat, SEEK_SET);
+        fread(dtb, images[i].len, 1, fd);
+        out_fd = fopen(dtbname, "wb");
+        fwrite(dtb, images[i].len, 1, out_fd);
+        free(dtb);
+        fclose(out_fd);
+    }
+    free(images);
+}
+
+void splitFile(char *file, int offs, int usealt){
 
     FILE *fd = NULL;
     int i=0,imagecount=0;
@@ -210,7 +268,13 @@ retry:
     switch(header.version) {
         case 1: dump_files_v1(fd, header, headerat); break;
         case 2: dump_files_v2(fd, header, headerat); break;
-        case 3: dump_files_v3(fd, header, headerat); break;
+        case 3:
+	    if(usealt)
+	        dump_files_v3_coolpad(fd, header, headerat);
+	    else
+	        dump_files_v3(fd, header, headerat);
+
+            break;
         default: printf("header v%u format not implemented\n", header.version); return;
     }
 
@@ -223,14 +287,19 @@ int main ( int argc, char *argv[] )
         printf("usage:%s dt.img [offset]\n", argv[0]);
         exit(0);
     }
-    
+
     char *dtb;
     int offset = 0;
-    if(argc == 3) {
+    int usealt = 0;
+    if(argc > 2) {
       offset = atoi(argv[2]);
     }
+    if(argc > 3) {
+      // todo, use getopt
+      usealt = 1;
+    }
     dtb=argv[1];
-    splitFile(dtb, offset);
+    splitFile(dtb, offset, usealt);
 
     return EXIT_SUCCESS;
 }
