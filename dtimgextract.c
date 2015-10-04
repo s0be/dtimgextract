@@ -155,11 +155,11 @@ void dump_files_v3(FILE *fd, qca_head header, uint32_t headerat) {
     free(images);
 }
 
-void splitFile(char *file){
+void splitFile(char *file, int offs){
 
     FILE *fd = NULL;
     int i=0,imagecount=0;
-    int headerat = 0;
+    int headerat = offs;
     qca_head header;
     dtb_entry_v2 *images;
 
@@ -167,6 +167,7 @@ void splitFile(char *file){
         printf ( "Extract dt.img file, open %s failure!\n", file );
         exit(1);
     }
+    fseek(fd, headerat, SEEK_SET);
 retry:
     fread(&header, sizeof(qca_head), 1, fd);
 
@@ -219,13 +220,17 @@ retry:
 int main ( int argc, char *argv[] )
 {
     if (argc==1) {
-        printf("usage:%s dt.img.\n", argv[0]);
+        printf("usage:%s dt.img [offset]\n", argv[0]);
         exit(0);
     }
     
     char *dtb;
+    int offset = 0;
+    if(argc == 3) {
+      offset = atoi(argv[2]);
+    }
     dtb=argv[1];
-    splitFile(dtb);
+    splitFile(dtb, offset);
 
     return EXIT_SUCCESS;
 }
