@@ -213,6 +213,14 @@ void dump_files_v3_coolpad(FILE *fd, qca_head header, uint32_t headerat) {
     free(images);
 }
 
+uint32_t align(uint32_t datalen, uint32_t page) {
+    uint32_t seekamt;
+    seekamt  = datalen / page;
+    seekamt += datalen % page ? 1 : 0;
+    seekamt *= page;
+    return seekamt;
+}
+
 void splitFile(char *file, int offs, int usealt){
 
     FILE *fd = NULL;
@@ -253,8 +261,24 @@ retry:
         printf("pname: %.16s\n", bheader.pname);
         printf("cmdline: %.512s\n", bheader.cmdline);
         printf("id: %u\n", bheader.id);
-        fseek (fd, 0, SEEK_END);
-        headerat = ftell(fd) - bheader.unused1;
+
+        fseek (fd, headerat, SEEK_SET);
+	fseek (fd, align(sizeof(boot_head), bheader.p_size), SEEK_CUR);
+
+	uint32_t seekamt;
+	seekamt = align(bheader.k_size, bheader.p_size);
+	printf("Skipping kernel 0x%x(0x%x)\n", bheader.k_size, seekamt);
+        fseek (fd, seekamt, SEEK_CUR);
+
+        seekamt = align(bheader.r_size, bheader.p_size);
+	printf("Skipping ramdisk 0x%x(0x%x)\n", bheader.r_size, seekamt);
+	fseek (fd, seekamt, SEEK_CUR);
+
+	seekamt = align(bheader.s_size, bheader.p_size);
+	printf("Skinning secondary image 0x%x(0x%x)\n", bheader.s_size, seekamt);
+	fseek (fd, seekamt, SEEK_CUR);
+
+        headerat = ftell(fd);
 	printf("Trying header at 0x%x\n", headerat);
         if(fseek(fd, headerat , SEEK_SET)) return;
         goto retry;
