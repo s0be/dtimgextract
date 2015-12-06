@@ -85,19 +85,19 @@ void dump_files_v1(FILE *fd, qca_head header, uint32_t headerat) {
     printf("\n");
     fseek(fd, headerat, SEEK_SET);
     for ( i = 0; i < header.num; i++ ){
-	char dtbname[256];
-	char *dtb;
+        char dtbname[256];
+        char *dtb;
         FILE *out_fd = NULL;
         sprintf(dtbname, "%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
                                          images[i].sec_rev);
-	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
-	dtb = malloc(images[i].len);
-	fseek(fd, images[i].offset + headerat, SEEK_SET);
-	fread(dtb, images[i].len, 1, fd);
-	out_fd = fopen(dtbname, "wb");
-	fwrite(dtb, images[i].len, 1, out_fd);
-	free(dtb);
-	fclose(out_fd);
+        printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
+        dtb = malloc(images[i].len);
+        fseek(fd, images[i].offset + headerat, SEEK_SET);
+        fread(dtb, images[i].len, 1, fd);
+        out_fd = fopen(dtbname, "wb");
+        fwrite(dtb, images[i].len, 1, out_fd);
+        free(dtb);
+        fclose(out_fd);
     }
     free(images);
 }
@@ -116,19 +116,19 @@ void dump_files_v2(FILE *fd, qca_head header, uint32_t headerat) {
     printf("\n");
     fseek(fd, headerat, SEEK_SET);
     for ( i = 0; i < header.num; i++ ){
-	char dtbname[256];
-	char *dtb;
+        char dtbname[256];
+        char *dtb;
         FILE *out_fd = NULL;
         sprintf(dtbname, "%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
                                          images[i].sec_rev);
-	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
-	dtb = malloc(images[i].len);
-	fseek(fd, images[i].offset + headerat, SEEK_SET);
-	fread(dtb, images[i].len, 1, fd);
-	out_fd = fopen(dtbname, "wb");
-	fwrite(dtb, images[i].len, 1, out_fd);
-	free(dtb);
-	fclose(out_fd);
+        printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
+        dtb = malloc(images[i].len);
+        fseek(fd, images[i].offset + headerat, SEEK_SET);
+        fread(dtb, images[i].len, 1, fd);
+        out_fd = fopen(dtbname, "wb");
+        fwrite(dtb, images[i].len, 1, out_fd);
+        free(dtb);
+        fclose(out_fd);
     }
     free(images);
 }
@@ -146,26 +146,26 @@ void dump_files_v3(FILE *fd, qca_head header, uint32_t headerat) {
                images[i].pmic1, images[i].pmic2,
                images[i].pmic3, images[i].pmic4,
                images[i].offset, images[i].len);
-       printf("  qcom,msm-id=<0x%x 0x%x>;\n",images[i].platform_id, images[i].msm_id2);
-       printf("  qcom,pmic-id=<0x%x 0x%x 0x%x 0x%x>;\n", images[i].pmic1, images[i].pmic2, images[i].pmic3, images[i].pmic4);
-       printf("  qcom,board-id=<0x%x 0x%x>;\n", images[i].variant_id, images[i].sec_rev);
+        printf("  qcom,msm-id=<0x%x 0x%x>;\n",images[i].platform_id, images[i].msm_id2);
+        printf("  qcom,pmic-id=<0x%x 0x%x 0x%x 0x%x>;\n", images[i].pmic1, images[i].pmic2, images[i].pmic3, images[i].pmic4);
+        printf("  qcom,board-id=<0x%x 0x%x>;\n", images[i].variant_id, images[i].sec_rev);
     }
     printf("\n");
     fseek(fd, headerat, SEEK_SET);
     for ( i = 0; i < header.num; i++ ){
-	char dtbname[256];
-	char *dtb;
+        char dtbname[256];
+        char *dtb;
         FILE *out_fd = NULL;
         sprintf(dtbname, "%x_%x_%x_%x.dtb", images[i].platform_id, images[i].variant_id,
                                          images[i].sec_rev, images[i].msm_id2);
-	printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
-	dtb = malloc(images[i].len);
-	fseek(fd, images[i].offset + headerat, SEEK_SET);
-	fread(dtb, images[i].len, 1, fd);
-	out_fd = fopen(dtbname, "wb");
-	fwrite(dtb, images[i].len, 1, out_fd);
-	free(dtb);
-	fclose(out_fd);
+        printf("Writing %s(%x bytes)\n", dtbname, images[i].len);
+        dtb = malloc(images[i].len);
+        fseek(fd, images[i].offset + headerat, SEEK_SET);
+        fread(dtb, images[i].len, 1, fd);
+        out_fd = fopen(dtbname, "wb");
+        fwrite(dtb, images[i].len, 1, out_fd);
+        free(dtb);
+        fclose(out_fd);
     }
     free(images);
 }
@@ -178,11 +178,11 @@ void dump_files_v3_coolpad(FILE *fd, qca_head header, uint32_t headerat) {
     for ( i = 0; i < header.num ; i++ ){
         fread(&images[i], sizeof(dtb_entry_v3_coolpad), 1, fd);
         printf("%x\t%x\t"
-	       "%x\t%x\t"
-	       "%x\t%x\t"
-	       "%x\t%x\t"
-	       "%x\t%s\t"
-	       "%x\t%x\n",
+               "%x\t%x\t"
+               "%x\t%x\t"
+               "%x\t%x\t"
+               "%x\t%s\t"
+               "%x\t%x\n",
                images[i].platform_id, images[i].variant_id,
                images[i].sec_rev, images[i].msm_id2,
                images[i].pmic1, images[i].pmic2,
@@ -262,24 +262,27 @@ retry:
         printf("cmdline: %.512s\n", bheader.cmdline);
         printf("id: %u\n", bheader.id);
 
+        uint32_t seekamt;
         fseek (fd, headerat, SEEK_SET);
-	fseek (fd, align(sizeof(boot_head), bheader.p_size), SEEK_CUR);
 
-	uint32_t seekamt;
-	seekamt = align(bheader.k_size, bheader.p_size);
-	printf("Skipping kernel 0x%x(0x%x)\n", bheader.k_size, seekamt);
+        seekamt = align(sizeof(boot_head), bheader.p_size);
+        printf("Skipping android boot header 0x%lx(0x%x)\n", sizeof(boot_head), seekamt);
+        fseek (fd, seekamt, SEEK_CUR);
+
+        seekamt = align(bheader.k_size, bheader.p_size);
+        printf("Skipping kernel 0x%x(0x%x)\n", bheader.k_size, seekamt);
         fseek (fd, seekamt, SEEK_CUR);
 
         seekamt = align(bheader.r_size, bheader.p_size);
-	printf("Skipping ramdisk 0x%x(0x%x)\n", bheader.r_size, seekamt);
-	fseek (fd, seekamt, SEEK_CUR);
+        printf("Skipping ramdisk 0x%x(0x%x)\n", bheader.r_size, seekamt);
+        fseek (fd, seekamt, SEEK_CUR);
 
-	seekamt = align(bheader.s_size, bheader.p_size);
-	printf("Skinning secondary image 0x%x(0x%x)\n", bheader.s_size, seekamt);
-	fseek (fd, seekamt, SEEK_CUR);
+        seekamt = align(bheader.s_size, bheader.p_size);
+        printf("Skinning secondary image 0x%x(0x%x)\n", bheader.s_size, seekamt);
+        fseek (fd, seekamt, SEEK_CUR);
 
         headerat = ftell(fd);
-	printf("Trying header at 0x%x\n", headerat);
+        printf("Trying header at 0x%x\n", headerat);
         if(fseek(fd, headerat , SEEK_SET)) return;
         goto retry;
         return;
@@ -293,10 +296,10 @@ retry:
         case 1: dump_files_v1(fd, header, headerat); break;
         case 2: dump_files_v2(fd, header, headerat); break;
         case 3:
-	    if(usealt)
-	        dump_files_v3_coolpad(fd, header, headerat);
-	    else
-	        dump_files_v3(fd, header, headerat);
+            if(usealt)
+                dump_files_v3_coolpad(fd, header, headerat);
+            else
+                dump_files_v3(fd, header, headerat);
 
             break;
         default: printf("header v%u format not implemented\n", header.version); return;
