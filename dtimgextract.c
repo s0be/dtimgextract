@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
     uint8_t hd_magic[8];
@@ -25,6 +26,30 @@ typedef struct {
     uint32_t version;
     uint32_t num;
 } qca_head;
+
+typedef struct {
+    void (*dt_file_dumper)(FILE *fd, qca_head header, uint32_t headerat);
+    uint32_t version;
+    bool extended;
+} dt_parser;
+
+dt_parser **dt_parsers;
+int dt_parser_cnt = 0;
+
+void add_dt_parser(dt_parser *dtp) {
+    if (!dt_parsers)
+        dt_parsers = malloc(sizeof(dt_parser *));
+    else
+        dt_parsers = realloc(dt_parsers, (dt_parser_cnt + 1) * sizeof(dt_parser *));
+
+    if (!dt_parsers) {
+        printf("Failed to allocate memory for %i device tree parsers\n",
+	       dt_parser_cnt);
+	exit(1);
+    }
+    dt_parsers[dt_parser_cnt] = dtp;
+    dt_parser_cnt++;
+}
 
 typedef struct {
     uint32_t platform_id;
@@ -102,6 +127,17 @@ void dump_files_v1(FILE *fd, qca_head header, uint32_t headerat) {
     free(images);
 }
 
+dt_parser v1_parser = {
+   .dt_file_dumper = &dump_files_v1,
+   .version = 1,
+   .extended = 0,
+};
+
+int __attribute__((constructor)) register_v1_parser(void) {
+    add_dt_parser(&v1_parser);
+    return 0;
+}
+
 void dump_files_v2(FILE *fd, qca_head header, uint32_t headerat) {
     int i;
     dtb_entry_v2 *images = malloc(header.num * sizeof(dtb_entry_v2));
@@ -131,6 +167,17 @@ void dump_files_v2(FILE *fd, qca_head header, uint32_t headerat) {
         fclose(out_fd);
     }
     free(images);
+}
+
+dt_parser v2_parser = {
+   .dt_file_dumper = &dump_files_v2,
+   .version = 2,
+   .extended = 0,
+};
+
+int __attribute__((constructor)) register_v2_parser(void) {
+    add_dt_parser(&v2_parser);
+    return 0;
 }
 
 void dump_files_v3(FILE *fd, qca_head header, uint32_t headerat) {
@@ -168,6 +215,17 @@ void dump_files_v3(FILE *fd, qca_head header, uint32_t headerat) {
         fclose(out_fd);
     }
     free(images);
+}
+
+dt_parser v3_parser = {
+   .dt_file_dumper = &dump_files_v3,
+   .version = 3,
+   .extended = 0,
+};
+
+int __attribute__((constructor)) register_v3_parser(void) {
+    add_dt_parser(&v3_parser);
+    return 0;
 }
 
 void dump_files_v3_coolpad(FILE *fd, qca_head header, uint32_t headerat) {
@@ -211,6 +269,17 @@ void dump_files_v3_coolpad(FILE *fd, qca_head header, uint32_t headerat) {
         fclose(out_fd);
     }
     free(images);
+}
+
+dt_parser v3_parser_coolpad = {
+   .dt_file_dumper = &dump_files_v3_coolpad,
+   .version = 3,
+   .extended = 1,
+};
+
+int __attribute__((constructor)) register_v3_parser_coolpad(void) {
+    add_dt_parser(&v3_parser_coolpad);
+    return 0;
 }
 
 uint32_t align(uint32_t datalen, uint32_t page) {
@@ -290,18 +359,18 @@ retry:
     printf("version: %u\n", header.version);
     printf("count: %u\n", header.num);
 
-    switch(header.version) {
-        case 1: dump_files_v1(fd, header, headerat); break;
-        case 2: dump_files_v2(fd, header, headerat); break;
-        case 3:
-            if(usealt)
-                dump_files_v3_coolpad(fd, header, headerat);
-            else
-                dump_files_v3(fd, header, headerat);
+    bool dumped = 0;
 
-            break;
-        default: printf("header v%u format not implemented\n", header.version); return;
+    for (int i = 0; i < dt_parser_cnt; i++) {
+        if (dt_parsers[i]->version == header.version &&
+	    dt_parsers[i]->extended == usealt) {
+            dt_parsers[i]->dt_file_dumper(fd, header, headerat);
+	    dumped = 1;
+	}
     }
+
+    if (!dumped)
+        printf("header v%u format not implemented\n", header.version); return;
 
     fclose(fd);
 }
