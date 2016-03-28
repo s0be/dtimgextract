@@ -224,10 +224,8 @@ uint32_t align(uint32_t datalen, uint32_t page) {
 void splitFile(char *file, int offs, int usealt){
 
     FILE *fd = NULL;
-    int i=0,imagecount=0;
     int headerat = offs;
     qca_head header;
-    dtb_entry_v2 *images;
 
     if ( (fd=fopen(file,"rb")) == NULL ) {
         printf ( "Extract dt.img file, open %s failure!\n", file );
@@ -237,13 +235,13 @@ void splitFile(char *file, int offs, int usealt){
 retry:
     fread(&header, sizeof(qca_head), 1, fd);
 
-    if(strncmp("QCDT", header.qc_magic, 4))
+    if(strncmp("QCDT", (char *)header.qc_magic, 4))
     {
         boot_head bheader;
         printf("Not a dt.img, processing as boot.img(got %.4s, wanted %s)\n", header.qc_magic, "QCDT");
         fseek(fd, headerat, SEEK_SET);
         fread(&bheader, sizeof(boot_head), 1, fd);
-        if(strncmp("ANDROID!", bheader.hd_magic, 8)) {
+        if(strncmp("ANDROID!", (char *)bheader.hd_magic, 8)) {
             printf("Not a boot.img, aborting (got %.8s, wanted %s)\n", bheader.hd_magic, "ANDROID!");
             return;
         } // 0x1037800/0x106A800 0x33000
