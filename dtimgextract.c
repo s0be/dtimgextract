@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <getopt.h>
 
 #include "dtimgextract.h"
 
@@ -117,24 +118,58 @@ retry:
     fclose(fd);
 }
 
+void usage(char *name) {
+    printf("usage:%s [-a] [-o 0xOFFSET] dt.img\n", name);
+}
+
 int main ( int argc, char *argv[] )
 {
-    if (argc==1) {
-        printf("usage:%s dt.img [offset]\n", argv[0]);
-        exit(0);
+    int offset = 0;
+    char *offset_arg = NULL;
+    int usealt = 0;
+    char *dtb = NULL;
+    int c;
+
+    static struct option long_options[] = {
+        {"offset", required_argument, NULL, 'o'},
+        {"usealt", no_argument, NULL, 'a'},
+        {NULL, 0, NULL, 0}
+    };
+
+    int option_index = 0;
+
+    while ( (c = getopt_long (argc, argv, "-ao:",
+                        long_options, &option_index)) != -1) {
+        switch(c) {
+            case 'o': offset_arg = optarg; break;
+            case 'a': usealt = 1; break;
+            case 1:
+                if (dtb == NULL) {
+                    dtb = optarg;
+                } else {
+                    usage(argv[0]);
+                    exit(1);
+                }
+                break;
+            case '?':
+            default:
+                printf("usage\n");
+                usage(argv[0]);
+                exit(1);
+                break;
+        }
     }
 
-    char *dtb;
-    int offset = 0;
-    int usealt = 0;
-    if(argc > 2) {
-      offset = atoi(argv[2]);
+    if (dtb == NULL || argc == 1) {
+        usage(argv[0]);
+        exit(1);
     }
-    if(argc > 3) {
-      // todo, use getopt
-      usealt = 1;
+
+    if (offset_arg) {
+        printf("Trying offset of %s\n", offset_arg);
+        sscanf(offset_arg, "%x", &offset);
     }
-    dtb=argv[1];
+
     splitFile(dtb, offset, usealt);
 
     return EXIT_SUCCESS;
