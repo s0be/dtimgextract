@@ -16,3 +16,6 @@ $(TARGET): $(OBJECTS)
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm $(OBJECTS) $(TARGET)
