@@ -6,7 +6,8 @@ SOURCES=dtimgextract.c \
 	qcdt_v1.c \
 	qcdt_v2.c \
 	qcdt_v3.c \
-	qcdt_v3_coolpad.c
+	qcdt_v3_coolpad.c \
+	qcdt_v3_motorola_athena.c
 OBJECTS=$(SOURCES:.c=.o)
 
 all: $(SOURCES) $(TARGET)
